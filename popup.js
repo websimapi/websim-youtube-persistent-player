@@ -6,7 +6,9 @@ function getQueryParams() {
     .split("&")
     .forEach((pair) => {
       const [key, value] = pair.split("=");
-      params[decodeURIComponent(key)] = decodeURIComponent(value);
+      if (key) {
+        params[decodeURIComponent(key)] = decodeURIComponent(value || "");
+      }
     });
   return params;
 }
@@ -44,8 +46,11 @@ function onPopupPlayerReady(event) {
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
   );
   iframe.setAttribute("allowfullscreen", "");
-  // Optionally, ensure the video begins playing.
+  // Ensure the video begins playing.
   event.target.playVideo();
+  // Force focus to the popup window so that it stays active 
+  // (this can help on some browsers when switching tabs).
+  window.focus();
 }
 
 function onPopupPlayerError(event) {
@@ -55,4 +60,10 @@ function onPopupPlayerError(event) {
 // Handle closing the popup.
 document.getElementById("closeBtn").addEventListener("click", () => {
   window.close();
+});
+
+// In case the DOM is loaded before the YouTube API is ready,
+// ensure the window is focused.
+document.addEventListener("DOMContentLoaded", () => {
+  window.focus();
 });

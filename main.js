@@ -80,7 +80,7 @@ document.getElementById("videoForm").addEventListener("submit", (e) => {
   }
 });
 
-// Handle popout persistent player
+// Handle popout persistent player.
 document.getElementById("popoutBtn").addEventListener("click", () => {
   if (!player || !player.getVideoData().video_id) {
     alert("No video is currently loaded to pop out.");
@@ -95,11 +95,27 @@ document.getElementById("popoutBtn").addEventListener("click", () => {
   const url = `popup.html?videoId=${videoId}&time=${currentTime}`;
 
   // Open the popup window.
-  popoutWindow = window.open(url, "popoutPlayer", "width=640,height=360");
+  // If the popup is already open but closed, reopen it.
+  if (popoutWindow == null || popoutWindow.closed) {
+    popoutWindow = window.open(url, "popoutPlayer", "width=660,height=400");
+  } else {
+    // If already open, update its location.
+    popoutWindow.location.href = url;
+    popoutWindow.focus();
+  }
 
-  // Optionally, you can pause the main player if you want to avoid duplicate audio.
-  // Uncomment the next line to pause in the main window:
-  // player.pauseVideo();
+  // Pause the main player to prevent duplicate audio.
+  if (typeof player.pauseVideo === "function") {
+    player.pauseVideo();
+  }
 });
 
-// Optionally, restore state from a popout if needed.
+// Listen for visibility changes on the main document.
+// If the user switches tabs, ensure that if a persistent popup exists,
+// its playback continues by trying to refocus it.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && popoutWindow && !popoutWindow.closed) {
+    // Attempt to refocus the popup window when main tab is hidden.
+    popoutWindow.focus();
+  }
+});
