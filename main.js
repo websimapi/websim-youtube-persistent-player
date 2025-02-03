@@ -1,10 +1,10 @@
 // Global variable to hold the YouTube player instance
 let player;
+let popoutWindow = null;
 
 // This function is called by the YouTube API once it's ready.
 window.onYouTubeIframeAPIReady = function () {
-  // Initially create an empty player with a blank video,
-  // so that when a video is loaded later it persists.
+  // Initially create an empty player so that later videos persist.
   player = new YT.Player("player", {
     height: "360",
     width: "640",
@@ -23,7 +23,13 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 function onPlayerReady(event) {
-  // Player is ready; no specific action needed at load.
+  // Set additional attributes to allow picture-in-picture and autoplay.
+  const iframe = player.getIframe();
+  iframe.setAttribute(
+    "allow",
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  );
+  iframe.setAttribute("allowfullscreen", "");
 }
 
 function onPlayerError(event) {
@@ -52,11 +58,10 @@ document.getElementById("videoForm").addEventListener("submit", (e) => {
   if (player && typeof player.loadVideoById === "function") {
     player.loadVideoById({
       videoId: videoID,
-      // Start from 0 seconds
       startSeconds: 0,
     });
   } else {
-    // If for some reason player isn't ready, create a new one.
+    // If for some reason the player isn't ready, create a new one.
     player = new YT.Player("player", {
       height: "360",
       width: "640",
@@ -74,3 +79,27 @@ document.getElementById("videoForm").addEventListener("submit", (e) => {
     });
   }
 });
+
+// Handle popout persistent player
+document.getElementById("popoutBtn").addEventListener("click", () => {
+  if (!player || !player.getVideoData().video_id) {
+    alert("No video is currently loaded to pop out.");
+    return;
+  }
+  // Get current video data and time.
+  const videoData = player.getVideoData();
+  const videoId = videoData.video_id;
+  const currentTime = Math.floor(player.getCurrentTime());
+
+  // Construct the URL with query parameters for the popup.
+  const url = `popup.html?videoId=${videoId}&time=${currentTime}`;
+
+  // Open the popup window.
+  popoutWindow = window.open(url, "popoutPlayer", "width=640,height=360");
+
+  // Optionally, you can pause the main player if you want to avoid duplicate audio.
+  // Uncomment the next line to pause in the main window:
+  // player.pauseVideo();
+});
+
+// Optionally, restore state from a popout if needed.
